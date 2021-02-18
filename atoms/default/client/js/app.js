@@ -4,34 +4,42 @@ import { makeTooltip } from './modules/tooltips'
 
 var target = "#graphicContainer";
 
-var button_values = ['Papua New Guinea',"Fiji",'Solomon Islands',"Vanuatu","Samoa","Tonga","Cook Islands","Tuvalu","Niue", "Federated States of Micronesia","Kiribati","Marshall Islands","Palau","Nauru"]
+var button_values = ["Total Pacific", 'Papua New Guinea',"Fiji",'Solomon Islands',"Vanuatu","Samoa","Tonga","Cook Islands","Tuvalu","Niue", "Federated States of Micronesia","Kiribati","Marshall Islands","Palau","Nauru"]
 
-var form = d3.select(".buttons")
-.attr("class", "form")
-// .attr("transform", "translate(" + width*0.60 + "," + height*0.25 + ")")
-// .attr("transform", "translate(" + margin.left + "," + (height - 150) + ")")
-// .attr("transform", "translate(" + 10 + "," + 100 + ")")
-// .style("font-size", "1em");
+// var form = d3.select(".buttons")
+// .attr("class", "form")
+// // .attr("transform", "translate(" + width*0.60 + "," + height*0.25 + ")")
+// // .attr("transform", "translate(" + margin.left + "," + (height - 150) + ")")
+// // .attr("transform", "translate(" + 10 + "," + 100 + ")")
+// // .style("font-size", "1em");
 
-form.selectAll("label")
+// form.selectAll("label")
+// .data(button_values)
+// .enter()
+// .append("label")
+// .text(function(d){
+// 	return d
+// })
+// .append("input")
+// .attr("type", "checkbox")
+// .attr("class", "checkbox")
+// .attr("value", function(d){
+// 	return d})
+// .attr("checked", function(d){
+// 	if (d == "Papua New Guinea"){
+// 		return true
+// 	}
+// })
+
+var selector = d3.select(".countryChooser")
+.selectAll("options")
 .data(button_values)
 .enter()
-.append("label")
-.text(function(d){
-	return d
-})
-.append("input")
-.attr("type", "checkbox")
-.attr("class", "checkbox")
-.attr("value", function(d){
-	return d})
-.attr("checked", function(d){
-	if (d == "Papua New Guinea"){
-		return true
-	}
-})
+.append('option')
+.text(d => d)
+.attr("value", d => d)
 
-var countries_selected = ["Papua New Guinea"]
+var countries_selected = ["Total Pacific"]
 
 function makeMap(data1, data2, data3, use_countries) {
 
@@ -41,7 +49,7 @@ function makeMap(data1, data2, data3, use_countries) {
 
 	d3.select("#sourceText").text("| Guardian analysis of CEPII's BACI dataset")
 
-	var importerCutoff = 15;
+	var importerCutoff = 20;
 
 	var new_centroids = data3.features
 
@@ -49,9 +57,13 @@ function makeMap(data1, data2, data3, use_countries) {
 
 	var kiri_index = new_centroids.findIndex(c => c.properties.name_long == "Kiribati")
 	var fiji_index = new_centroids.findIndex(c => c.properties.name_long == "Fiji")
+	var wallis_index = new_centroids.findIndex(c => c.properties.name_long == "Wallis and Futuna Islands")
 
+	
+	
 	new_centroids[kiri_index].geometry.coordinates = [-168.734039, -3.370417]
 	new_centroids[fiji_index].geometry.coordinates = [179.414413, -16.578193]
+	new_centroids[wallis_index].geometry.coordinates = [-180.348348251,-13.8873703903]
 	// https://marineregions.org/gazetteer.php?p=details&id=8441
 
 	// new_centroids['Tuvalu']['geometry']["coordinates"] = [177.64933, -7.109535]
@@ -60,10 +72,9 @@ function makeMap(data1, data2, data3, use_countries) {
 	// var commodities = data1.columns.filter(d => d != "Importing country" && d != "Exporting country" && d!= "Oil, metals and mineral products");
 	var commodities = data1.columns.filter(d => d != "Importing country" && d != "Exporting country");
 
-
 	var max_val = d3.max(data1.map(d => +d[commodities[0]] && +d[commodities[1]] && +d[commodities[2]]))
-
 	
+
 	var chyna = data1.filter(d => d['Importing country'] == "China" && d['Exporting country'] != "Total Pacific")
 	chyna = chyna.map(d => {
 		const obj = {};
@@ -76,11 +87,6 @@ function makeMap(data1, data2, data3, use_countries) {
 	china_total = d3.sum(china_total)
 
 	var countries = topojson.feature(data2, data2.objects.countries);
-
-
-
-
-
 
 	var isMobile;
 	var windowWidth = Math.max(document.documentElement.clientWidth, window.innerWidth || 0);
@@ -95,15 +101,15 @@ function makeMap(data1, data2, data3, use_countries) {
 
 	var width = document.querySelector(target).getBoundingClientRect().width
 	var height = width*0.45;					
-	var margin = {top: 10, right: 10, bottom: 10, left:10};
+	var margin = {top: 20, right: 10, bottom: 10, left:10};
 
 	width = width - margin.left - margin.right,
     height = height - margin.top - margin.bottom;
    
 	var projection = d3.geoMercator()
-                .center([-48,10])
-                .scale(width * 0.10)
-                .rotate([-180,0])
+                .center([0,12])
+                .scale(width * 0.16)
+                .rotate([-145,0])
 				.translate([width/2,height/2]); 
 				
 	var path = d3.geoPath(projection);
@@ -312,12 +318,15 @@ function makeMap(data1, data2, data3, use_countries) {
 			targetNodes.push(newRow)
 		})	
 
-	var pacific_countries = ['Papua New Guinea',"Fiji",'Solomon Islands',"Vanuatu","Samoa","Tonga","Cook Islands","Tuvalu","Niue", "Federated States of Micronesia","Kiribati","Marshall Islands","Palau","Nauru"]
+	var pacific_countries = ["Total Pacific", 'Papua New Guinea',"Fiji",'Solomon Islands',"Vanuatu","Samoa","Tonga","Cook Islands","Tuvalu","Niue", "Federated States of Micronesia","Kiribati","Marshall Islands","Palau","Nauru"]
 	
 	var topTargets = targetNodes.sort((a, b) => d3.descending(a.total, b.total)).slice(0, importerCutoff)
 
 	var shortNodes = sourceNodes.concat(topTargets)
 
+	shortNodes = shortNodes.filter(d => d.total != 0)
+
+	// remove empty nodes
 	var top_x_importers = topTargets.map(d => d.nodeName)
 	
 	var exports = data.filter(function(d) {
@@ -325,7 +334,8 @@ function makeMap(data1, data2, data3, use_countries) {
 			return d.imports
 		}
 	})
-	
+	exports = exports.filter(d => d.total != 0)
+	console.log(exports)
 	
 
 
@@ -400,8 +410,10 @@ function makeMap(data1, data2, data3, use_countries) {
 		.attr("r", function(d){
 			if (d.nodeName == "Papua New Guinea" | d.nodeName == "Solomon Islands"){
 				// var oz_total = (d.total / country_array.length)
-				var oz_total = (d.total / 2)
-				return nodeWidth(oz_total)
+				// var oz_total = (d.total / 2)
+				return nodeWidth(d.total / 2)
+			} else if (d.nodeName == "Total Pacific"){
+				return nodeWidth(d.total / 3)
 			} else {
 				return nodeWidth(d.total)
 			}
@@ -420,113 +432,60 @@ function makeMap(data1, data2, data3, use_countries) {
 
 
 
-		var legend = features.append("svg")
-		.attr("class", "legend")
-		.attr("transform", "translate(" + 10 + "," + 100 + ")")
-		.style("font-size", "1em");
+		var self = this
+		var keyLeftMargin = 20
+		var keyRightMargin = 20
+
+		// var keyWidth = document.querySelector(".col50").getBoundingClientRect().width
+		var keyWidth = 400
+
+		keyWidth = keyWidth - keyRightMargin - keyLeftMargin
+
+		// var keySquare = keyWidth / 10;
+
+		var keyHeight = 30
 
 		var labels = commodities;
 
-		var footerAnnotations = d3.select("#footerAnnotations");
-		
-		footerAnnotations.html("");	
-	
-	
 		var x = d3.scaleBand()
-		.range([0, width])
-		.paddingInner(0.08);
+		.range([0, keyWidth])
+		.paddingInner(0.05);
 		x.domain(labels);
 	
+		var y = d3.scaleLinear().range([keyHeight, 0]);
+	
+		d3.select("#keyContainer svg").remove();
 
-		var y = d3.scaleLinear().range([height, 0]);
+		var keyBox = d3.select("#keyContainer")
+			.append("svg")
+			.attr("width", keyWidth)
+			.attr("height", "40px")
+
+		var keySize = 5; 
 	
-		// var features = svg.append("g").attr("transform", "translate(" + margin.left + "," + margin.top + ")");
-		function textPadding(d) {
-			if (d > 0) {
-				return 12
-			}
-	
-			else {
-				return - 2
-			}
-		}
-	
-		function textPaddingMobile(d) {
-			if (d > 0) {
-				return 12
-			}
-	
-			else {
-				return 4
-			}
-		}	
-	
-		 var	size = 5; 
-	
-		var padding = 5;
-	
-		if (isMobile) {
-	
-			padding = 4
-		
-	
-			features.selectAll(".annotationCircles")
-					.data(labels)
-					.enter()
-					.append("circle")
-					.attr("class", "annotationCircle")
-					.attr("cy", height - padding)
-					.attr("cx", function(d, i) { 
-						return x(d) + x.bandwidth()/2})
-					.attr("r", size)
-					.attr("fill", function(d){
-						return colors(d)
-					});
-	
-			features.selectAll(".annotationText")
+		keyBox.selectAll(".annotationCircles")
 				.data(labels)
-				.enter().append("text")
-				.attr("class", "annotationText")
-				.attr("y", height - size - padding - 10)
-				.attr("x", function(d,i){ return x(d) + x.bandwidth()/2})
-				.style("text-anchor", "middle")
-				.style("opacity", 1)
-				.style("font-size", "0.75em")
-				.text(function(d) {return d});
-			}
-	
-		
-				
-				else {
-	
-			features.selectAll(".annotationCircles")
-					.data(labels)
-					.enter()
-					.append("circle")
-					.attr("class", "annotationCircle")
-					.attr("cy", height - padding)
-					.attr("cx", function(d, i) { 
-						return x(d) + x.bandwidth()/2})
-					.attr("r", size)
-					.attr("fill", function(d){
-						return colors(d)
-					});
-	
-			features.selectAll(".annotationText")
-				.data(labels)
-				.enter().append("text")
-				.attr("class", "annotationText")
-				.attr("y", height - size - padding - 10)
-				.attr("x", function(d,i){ return x(d) + x.bandwidth()/2})
-				.style("text-anchor", "middle")
-				.style("opacity", 1)
-				.style("font-size", "1em")
-				.text(function(d) {return d});
-	
-		}	
+				.enter()
+				.append("circle")
+				.attr("class", "annotationCircle")
+				.attr("cy", keyHeight /2 )
+				.attr("cx", function(d, i) { 
+					return x(d) + x.bandwidth()/2})
+				.attr("r", keySize)
+				.attr("fill", function(d){
+					return colors(d)
+				});
 
-
-
+		keyBox.selectAll(".annotationText")
+			.data(labels)
+			.enter().append("text")
+			.attr("class", "annotationText")
+			.attr("y", keyHeight + 5)
+			.attr("x", function(d,i){ return x(d) + x.bandwidth()/2})
+			.style("text-anchor", "middle")
+			.style("opacity", 1)
+			.style("font-size", "0.6em")
+			.text(function(d) {return d});
 
 
 } 
@@ -551,21 +510,28 @@ var q = Promise.all([d3.csv("<%= path %>/pac_indi_grouped_rain.csv"),
 									}, 500)
 									}
 						})
-						var checked = d3.selectAll(".checkbox")
-							checked.on("click", function(d){
-							const selected = d3.select(this).property("value")
-							// selected_value = selected.property("value")
-							// console.log(selected)
-							if (countries_selected.includes(selected)){
-								countries_selected = countries_selected.filter(d => d != selected)
+// 						var checked = d3.selectAll(".checkbox")
+// 							checked.on("click", function(d){
+// 							const selected = d3.select(this).property("value")
+// 							// selected_value = selected.property("value")
+// 							// console.log(selected)
+// 							if (countries_selected.includes(selected)){
+// 								countries_selected = countries_selected.filter(d => d != selected)
+// 								console.log(countries_selected)
+// 								makeMap(exports, countries, new_centroids, countries_selected)
+// 							} else {
+// 								countries_selected.push(selected)
+// 								console.log(countries_selected)
+// 								makeMap(exports, countries, new_centroids, countries_selected)
+// 							}
+// })
+
+							d3.select(".countryChooser")
+							.on("change", function(d){
+								countries_selected = [d3.select(this).property("value")]
 								console.log(countries_selected)
 								makeMap(exports, countries, new_centroids, countries_selected)
-							} else {
-								countries_selected.push(selected)
-								console.log(countries_selected)
-								makeMap(exports, countries, new_centroids, countries_selected)
-							}
-})
+							})
         });
 
         
