@@ -132,7 +132,7 @@ function makeMap(data1, data2, data3, use_countries) {
 	  }
 
 	var arcTotalWidth = d3.scaleLinear()
-  		.range([1,30])
+  		.range([1,20])
 		.domain([1,max_val]);
 
 	var arcWidth = d3.scaleLog()
@@ -140,7 +140,7 @@ function makeMap(data1, data2, data3, use_countries) {
 		.domain([1,max_val]);
 
 	var nodeWidth = d3.scaleLinear()
-		.range([5,30])
+		.range([5,20])
   		.domain([1,china_total]);
 	  
 	var getCirclePoints = function(x1,y1,x2,y2,r) {
@@ -411,9 +411,9 @@ function makeMap(data1, data2, data3, use_countries) {
 			if (d.nodeName == "Papua New Guinea" | d.nodeName == "Solomon Islands"){
 				// var oz_total = (d.total / country_array.length)
 				// var oz_total = (d.total / 2)
-				return nodeWidth(d.total / 2)
+				return nodeWidth(d.total)
 			} else if (d.nodeName == "Total Pacific"){
-				return nodeWidth(d.total / 3)
+				return nodeWidth(d.total)
 			} else {
 				return nodeWidth(d.total)
 			}
