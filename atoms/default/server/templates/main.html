@@ -1,0 +1,49 @@
+<div class="interactive-wrapper">
+    <div id="outer-wrapper" class="showcase">
+            <div class="row">
+
+                <div class='figureTitle' id="chartTitle"></div>
+                <div class='subTitle' id="subTitle"></div>
+                <div class='notes' id='chartKey'></div>
+                <div class="buttons" id="buttons"></div>
+                
+                <div class="selectorBox col50">
+
+                    
+                    <div class="keyText">Currently showing</div>
+
+                    <select id="statChooser" value='{{currentIndex}}'>
+                        {{#mapping:i}}
+                            <option value='{{i}}'>{{display}}</option>
+                        {{/mapping}}
+                    </select>
+                   
+
+
+                </div>
+                {{/if}}
+                
+                {{#if key}}
+                <div class="keyBox col50">
+
+                    <div class="keyText">Key</div>
+
+                    <div id="keyContainer"></div>
+     
+            </div>
+            <div class="row borderBottom chartSans" id="graphicContainer">	
+                
+
+                    
+            </div>
+            
+            <div class='footer offset'>
+                <div id="footerAnnotations">
+
+                </div>	
+                
+                <span id="footnote"></span> Guardian graphic <span id="sourceText"></span>
+            </div>	
+            
+    </div>
+</div>
