@@ -6,31 +6,6 @@ var target = "#graphicContainer";
 
 var button_values = ["Total Pacific", 'Papua New Guinea',"Fiji",'Solomon Islands',"Vanuatu","Samoa","Tonga","Cook Islands","Tuvalu","Niue", "Federated States of Micronesia","Kiribati","Marshall Islands","Palau","Nauru"]
 
-// var form = d3.select(".buttons")
-// .attr("class", "form")
-// // .attr("transform", "translate(" + width*0.60 + "," + height*0.25 + ")")
-// // .attr("transform", "translate(" + margin.left + "," + (height - 150) + ")")
-// // .attr("transform", "translate(" + 10 + "," + 100 + ")")
-// // .style("font-size", "1em");
-
-// form.selectAll("label")
-// .data(button_values)
-// .enter()
-// .append("label")
-// .text(function(d){
-// 	return d
-// })
-// .append("input")
-// .attr("type", "checkbox")
-// .attr("class", "checkbox")
-// .attr("value", function(d){
-// 	return d})
-// .attr("checked", function(d){
-// 	if (d == "Papua New Guinea"){
-// 		return true
-// 	}
-// })
-
 var selector = d3.select(".countryChooser")
 .selectAll("options")
 .data(button_values)
@@ -43,13 +18,15 @@ var countries_selected = ["Total Pacific"]
 
 function makeMap(data1, data2, data3, use_countries) {
 
+	var commodities = data1.columns.filter(d => d != "Importing country" && d != "Exporting country");
+
+	var importerCutoff = 20;
+
 	d3.select("#chartTitle").text("China dominates Pacific extractive exports")
 
 	d3.select("#subTitle").text("Value of trade flows measured in tonnes")
 
 	d3.select("#sourceText").text("| Guardian analysis of CEPII's BACI dataset")
-
-	var importerCutoff = 20;
 
 	var new_centroids = data3.features
 
@@ -59,8 +36,6 @@ function makeMap(data1, data2, data3, use_countries) {
 	var fiji_index = new_centroids.findIndex(c => c.properties.name_long == "Fiji")
 	var wallis_index = new_centroids.findIndex(c => c.properties.name_long == "Wallis and Futuna Islands")
 
-	
-	
 	new_centroids[kiri_index].geometry.coordinates = [-168.734039, -3.370417]
 	new_centroids[fiji_index].geometry.coordinates = [179.414413, -16.578193]
 	new_centroids[wallis_index].geometry.coordinates = [-180.348348251,-13.8873703903]
@@ -70,21 +45,48 @@ function makeMap(data1, data2, data3, use_countries) {
 	new_centroids.push({"properties": {"name_long": "Tuvalu"}, "geometry":{"coordinates": [-177.64933, -7.109535]}})
 
 	// var commodities = data1.columns.filter(d => d != "Importing country" && d != "Exporting country" && d!= "Oil, metals and mineral products");
-	var commodities = data1.columns.filter(d => d != "Importing country" && d != "Exporting country");
+	// var commodities = data1.columns.filter(d => d != "Importing country" && d != "Exporting country");
 
-	var max_val = d3.max(data1.map(d => +d[commodities[0]] && +d[commodities[1]] && +d[commodities[2]]))
-	
+	var filtered_data1 = data1.filter(d => d['Exporting country'] == use_countries[0])
 
-	var chyna = data1.filter(d => d['Importing country'] == "China" && d['Exporting country'] != "Total Pacific")
-	chyna = chyna.map(d => {
-		const obj = {};
+
+	var vals = filtered_data1.map(d => {
+		const obj = {}
 		commodities.forEach(e => obj[e] = d[e])
 		return obj
 	})
-	var china_total = chyna.map(d => Object.values(d))
-	china_total = Array.prototype.concat.apply([], china_total)
-	china_total = china_total.map(d => +d)
-	china_total = d3.sum(china_total)
+	vals = vals.map(d => Object.values(d))
+	vals = Array.prototype.concat.apply([], vals)
+	vals = vals.map(d => +d)
+
+	var max_val = d3.max(vals)
+
+
+	/// work out the maximum total, to use for node width
+
+	var totals = {}
+	var totalsUniques = new Set()
+
+	filtered_data1.forEach(d => {
+	
+		if (!totalsUniques.has(d['Importing country'])) {
+			totals[d['Importing country']] = []
+			}
+	})
+
+
+
+	filtered_data1.map(d => totals[d['Importing country']].push(+d[commodities[0]], +d[commodities[1]], +d[commodities[2]]))
+	var total_array = []
+	for (let country in totals){
+		total_array.push(d3.sum(totals[country]))
+	}
+
+	var max_total = d3.max(total_array)
+
+	console.log("max total", max_total)
+
+
 
 	var countries = topojson.feature(data2, data2.objects.countries);
 
@@ -141,7 +143,7 @@ function makeMap(data1, data2, data3, use_countries) {
 
 	var nodeWidth = d3.scaleLinear()
 		.range([5,20])
-  		.domain([1,china_total]);
+  		.domain([1,max_total]);
 	  
 	var getCirclePoints = function(x1,y1,x2,y2,r) {
 		var startAngle = Math.atan2(y2- y1, x2-x1) * 180 / Math.PI
@@ -309,6 +311,7 @@ function makeMap(data1, data2, data3, use_countries) {
 			import_totals[country] = country_total
 		}
 
+		
 		targetUniques.forEach(d => {
 			var newRow = {}
 			newRow['nodeName'] = d
@@ -318,9 +321,14 @@ function makeMap(data1, data2, data3, use_countries) {
 			targetNodes.push(newRow)
 		})	
 
+
 	var pacific_countries = ["Total Pacific", 'Papua New Guinea',"Fiji",'Solomon Islands',"Vanuatu","Samoa","Tonga","Cook Islands","Tuvalu","Niue", "Federated States of Micronesia","Kiribati","Marshall Islands","Palau","Nauru"]
 	
 	var topTargets = targetNodes.sort((a, b) => d3.descending(a.total, b.total)).slice(0, importerCutoff)
+
+	var max_target = d3.max(topTargets.map(d => d.total))
+
+	console.log("max_target", max_target)
 
 	var shortNodes = sourceNodes.concat(topTargets)
 
@@ -335,8 +343,8 @@ function makeMap(data1, data2, data3, use_countries) {
 		}
 	})
 	exports = exports.filter(d => d.total != 0)
-	console.log(exports)
-	
+
+	// console.log(exports)
 
 
 	// var	selected_countries = use_countries
@@ -408,12 +416,8 @@ function makeMap(data1, data2, data3, use_countries) {
 		.attr("cx",d => projection(d.location)[0])
 		.attr("cy",d => projection(d.location)[1])
 		.attr("r", function(d){
-			if (d.nodeName == "Papua New Guinea" | d.nodeName == "Solomon Islands"){
-				// var oz_total = (d.total / country_array.length)
-				// var oz_total = (d.total / 2)
-				return nodeWidth(d.total)
-			} else if (d.nodeName == "Total Pacific"){
-				return nodeWidth(d.total)
+			if (pacific_countries.includes(d.nodeName)){
+				return nodeWidth(max_target)
 			} else {
 				return nodeWidth(d.total)
 			}
@@ -510,21 +514,6 @@ var q = Promise.all([d3.csv("<%= path %>/pac_indi_grouped_rain.csv"),
 									}, 500)
 									}
 						})
-// 						var checked = d3.selectAll(".checkbox")
-// 							checked.on("click", function(d){
-// 							const selected = d3.select(this).property("value")
-// 							// selected_value = selected.property("value")
-// 							// console.log(selected)
-// 							if (countries_selected.includes(selected)){
-// 								countries_selected = countries_selected.filter(d => d != selected)
-// 								console.log(countries_selected)
-// 								makeMap(exports, countries, new_centroids, countries_selected)
-// 							} else {
-// 								countries_selected.push(selected)
-// 								console.log(countries_selected)
-// 								makeMap(exports, countries, new_centroids, countries_selected)
-// 							}
-// })
 
 							d3.select(".countryChooser")
 							.on("change", function(d){
